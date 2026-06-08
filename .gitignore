@@ -1,3 +1,4 @@
+# ─── Python ────────────────────────────────────────────────────
 # Environments
 .env
 .venv
@@ -7,15 +8,49 @@ ENV/
 env.bak/
 venv.bak/
 
-# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimised / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
+*.pyo
+*.pyd
 
-# IDEs
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# ─── Node / Frontend ───────────────────────────────────────────
+node_modules/
+fisheries-feed-frontend/node_modules/
+fisheries-feed-frontend/dist/
+fisheries-feed-frontend/dist-ssr/
+fisheries-feed-frontend/*.local
+fisheries-feed-frontend/.env
+*.local
+
+# ─── IDEs ──────────────────────────────────────────────────────
 .vscode/
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# OS generated files
+# ─── OS generated files ────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ─── Logs ──────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Misc ──────────────────────────────────────────────────────
+*.zip
