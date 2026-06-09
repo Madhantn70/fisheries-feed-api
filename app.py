@@ -3,6 +3,7 @@ from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, date
+import pytz
 import os
 import jwt
 from functools import wraps
@@ -591,9 +592,12 @@ def add_feed_stock():
 
         user_id = g.current_user.get('id') if hasattr(g, 'current_user') else None
 
+        ist = pytz.timezone("Asia/Kolkata")
+        current_time = datetime.now(ist)
+
         cursor.execute(
             "INSERT INTO feed_stock (feed_type_id, quantity, date_added, user_id) VALUES (%s, %s, %s, %s)",
-            (data['feed_type_id'], data['quantity'], date.today(), user_id)
+            (data['feed_type_id'], data['quantity'], current_time, user_id)
         )
         conn.commit()
         new_id = cursor.lastrowid
@@ -1086,12 +1090,12 @@ def report_monthly_summary():
         stock_params = []
         if date_from:
             log_conditions.append("DATE(feed_time) >= %s")
-            stock_conditions.append("date_added >= %s")
+            stock_conditions.append("DATE(date_added) >= %s")
             log_params.append(date_from)
             stock_params.append(date_from)
         if date_to:
             log_conditions.append("DATE(feed_time) <= %s")
-            stock_conditions.append("date_added <= %s")
+            stock_conditions.append("DATE(date_added) <= %s")
             log_params.append(date_to)
             stock_params.append(date_to)
 
