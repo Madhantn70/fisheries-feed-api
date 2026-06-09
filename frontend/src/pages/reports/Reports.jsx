@@ -6,8 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { reportsService, feedTypesService, tanksService } from '../../services/api';
-import { formatDate } from '../../lib/utils';
-import { cn } from '../../lib/utils';
+import { formatDate, cn, getISTDateString } from '../../lib/utils';
 import {
   FileText, Download, BarChart2, Package, Droplets, Calendar,
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock
@@ -158,7 +157,7 @@ export function Reports() {
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const a   = document.createElement('a');
       a.href    = url;
-      const month = new Date().toISOString().slice(0, 7);
+      const month = getISTDateString(new Date()).slice(0, 7);
       a.download  = `${activeType}-report-${month}.pdf`;
       document.body.appendChild(a);
       a.click();

@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { auditService } from '../../services/api';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, getISTDateString } from '../../lib/utils';
 import { ShieldCheck, Download, Search, X, ClipboardX, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -111,7 +111,7 @@ export function AuditTrail() {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `audit-trail-${getISTDateString(new Date())}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

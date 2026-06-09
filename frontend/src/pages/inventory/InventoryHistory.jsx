@@ -4,7 +4,7 @@ import { Input } from '../../components/ui/Input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { feedStockService, feedTypesService } from '../../services/api';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, getISTDateString } from '../../lib/utils';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { Download, Search, Calendar, PackageOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -40,7 +40,7 @@ export function InventoryHistory() {
     
     let matchesDate = true;
     if (filterDate) {
-      const itemDate = new Date(item.date_added).toISOString().split('T')[0];
+      const itemDate = getISTDateString(item.date_added);
       matchesDate = itemDate === filterDate;
     }
     
@@ -66,7 +66,7 @@ export function InventoryHistory() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `inventory_history_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `inventory_history_${getISTDateString(new Date())}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

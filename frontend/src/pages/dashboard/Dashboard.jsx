@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { dashboardService, feedLogsService, feedTypesService, tanksService } from '../../services/api';
 import { Package, AlertTriangle, ThermometerSun, Info, TrendingUp } from 'lucide-react';
-import { cn, formatDateTime } from '../../lib/utils';
+import { cn, formatDateTime, getISTDateString } from '../../lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { CardSkeleton, ChartSkeleton, TableSkeleton } from '../../components/ui/Skeleton';
 import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
@@ -37,7 +37,7 @@ export function Dashboard() {
         if (logsData && logsData.length > 0) {
           const dailyMap = {};
           logsData.forEach(log => {
-            const dateStr = new Date(log.feed_time).toISOString().split('T')[0];
+            const dateStr = getISTDateString(log.feed_time);
             const qty = Math.abs(parseFloat(log.quantity_used)) || 0;
             dailyMap[dateStr] = (dailyMap[dateStr] || 0) + qty;
           });
