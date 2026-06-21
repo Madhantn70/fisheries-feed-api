@@ -1,77 +1,316 @@
-# Fisheries Feed Management System - Backend API
+# AquaFeed - Fisheries Feed Management System
+
+AquaFeed is a full-stack Fisheries Feed Management System designed to manage feed inventory, monitor feed consumption, track stock levels, manage tanks, and generate reports for aquaculture operations.
+
+## Live Demo
+
+**Frontend (Vercel)**
+https://aquafeed-front.vercel.app
+
+**Backend API (Railway)**
+https://fisheries-feed-api-production.up.railway.app/api/test
+
+---
 
 ## Project Overview
-This project is a standalone Flask-based backend API for a Fisheries Feed Management System. It provides robust endpoints to manage feed types, track feeding logs, and monitor stock levels across different tanks. The API returns standardized JSON responses and is designed to connect seamlessly to a MySQL database.
+
+AquaFeed helps fisheries and aquaculture farms efficiently manage feed stock, feeding operations, tank information, and inventory analytics through a centralized web application.
+
+The system provides real-time inventory tracking, feeding logs, audit trails, dashboard analytics, and reporting features while maintaining secure authentication and role-based access control.
+
+---
+
+## Key Features
+
+### Authentication & Security
+
+* User Registration
+* User Login
+* JWT Authentication
+* Protected API Endpoints
+* Session Persistence
+
+### Feed Management
+
+* Feed Type Management
+* Feed Stock Tracking
+* Feed Inventory History
+* Low Stock Alerts
+
+### Tank Management
+
+* Add Tanks
+* Update Tank Information
+* Delete Tanks
+* Tank Feed Tracking
+
+### Feed Operations
+
+* Feed Consumption Logging
+* Feeding History Tracking
+* Daily Feed Monitoring
+
+### Analytics & Reporting
+
+* Dashboard Statistics
+* Feed Consumption Analytics
+* Inventory Reports
+* Audit Trail Monitoring
+
+### Timezone Support
+
+* Indian Standard Time (IST)
+* Consistent Date & Time Formatting
+* Production-Ready Timestamp Handling
+
+---
 
 ## Tech Stack
-- **Framework:** Python, Flask
-- **Database:** MySQL
-- **Database Connector:** `mysql-connector-python`
 
-## Features
-- **Tanks Management:** Add, update, view, and delete tanks (with cascade logic for safely deleting associated logs).
-- **Feed Stock Management:** Register incoming feed stock additions.
-- **Feed Logs:** Track daily feeding amounts per tank.
-- **Dashboard Analytics:** Calculates total stock added, total used, and dynamically derives the current available stock.
-- **Low Stock Alerts:** Automatically flags feed types where current stock drops below 200 units.
+### Frontend
+
+* React.js
+* Vite
+* Tailwind CSS
+* Axios
+* Recharts
+
+### Backend
+
+* Python
+* Flask
+* Flask-CORS
+* JWT Authentication
+
+### Database
+
+* MySQL
+
+### Deployment
+
+* Vercel (Frontend)
+* Railway (Backend)
+
+---
+
+## System Architecture
+
+Frontend (React + Vite)
+
+↓
+
+REST API (Flask)
+
+↓
+
+MySQL Database
+
+↓
+
+Railway Deployment
+
+---
+
+## Screenshots
+
+### Login Page
+
+   
+<img width="1012" height="816" alt="Login" src="https://github.com/user-attachments/assets/e6db1786-4974-4d71-8174-01e602d41064" />
+
+### Dashboard
+
+<img width="1893" height="903" alt="Dashboard" src="https://github.com/user-attachments/assets/1c1a04a7-73d3-45c5-ae0d-f2e14d273119" />
+
+
+### Feed Stock Management
+
+<img width="1911" height="905" alt="Add Stock" src="https://github.com/user-attachments/assets/9521074a-5e5f-41f9-9246-6c51cbd5bd6a" />
+
+
+### Feed Entry
+
+<img width="1895" height="902" alt="Feed Entry" src="https://github.com/user-attachments/assets/cb9c439f-1822-4ef8-ae4f-fda0a3b3db4e" />
+
+
+### Reports
+
+<img width="1907" height="897" alt="Report" src="https://github.com/user-attachments/assets/f11b4a70-fa7f-4d28-8bd2-4c82c2ad2491" />
+
+
+---
 
 ## Project Structure
+
 ```text
 fisheries-feed-api/
 │
-├── app.py                  # Main application file containing all API routes
-├── requirements.txt        # Dependencies needed to run the project
-├── .gitignore              # Standard git ignores for Python projects
-└── README.md               # Project documentation
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+│
+├── app.py
+├── requirements.txt
+├── README.md
+│
+└── database/
 ```
 
-## Setup Instructions
+## Installation
 
-### 1. Prerequisites
-- Python 3.8+
-- MySQL Server
+### Clone Repository
 
-### 2. Database Setup
-1. Create a MySQL database named `feed_management`.
-2. Ensure you have the `feed_types`, `tanks`, `feed_stock`, and `feed_logs` tables set up.
-3. Update the database credentials in `app.py` (inside the `get_db_connection` function) to match your local MySQL setup:
-   ```python
-   host="localhost",
-   user="root",
-   password="YourPasswordHere",  # Change this to your local MySQL password
-   database="feed_management"
-   ```
+```bash
+git clone https://github.com/Madhantn70/fisheries-feed-api.git
 
-### 3. Running the Project Locally
-1. **Open a terminal** in the project directory.
-2. **Create a virtual environment** (optional but highly recommended):
-   ```bash
-   python -m venv venv
-   
-   # On Windows:
-   venv\Scripts\activate
-   # On Mac/Linux:
-   source venv/bin/activate
-   ```
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Run the Flask application:**
-   ```bash
-   python app.py
-   ```
-5. The API will start running at `http://127.0.0.1:5000`.
+cd fisheries-feed-api
+```
 
-## API Endpoints Summary
-- `GET /api/test` - Test if the API is running
-- `GET /api/feed-types` - Fetch all feed types
-- `GET /api/tanks` - Fetch all tanks
-- `POST /api/tanks` - Add a new tank
-- `PUT /api/tanks/<id>` - Update an existing tank
-- `DELETE /api/tanks/<id>` - Delete a tank and its associated feed logs
-- `POST /api/feed-stock` - Add new feed stock
-- `POST /api/feed-logs` - Log a feeding event
-- `GET /api/feed-logs` - Fetch all feeding logs
-- `GET /api/dashboard` - Get overall stock analytics
-- `GET /api/low-stock` - Get feed types that are low in stock
+### Backend Setup
+
+```bash
+pip install -r requirements.txt
+
+python app.py
+```
+
+Backend runs at:
+
+```text
+http://127.0.0.1:5000
+```
+
+### Frontend Setup
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+Frontend runs at:
+
+```text
+http://localhost:5173
+```
+
+---
+
+## Environment Variables
+
+### Frontend (.env)
+
+```env
+VITE_API_URL=https://fisheries-feed-api-production.up.railway.app/api
+```
+
+### Backend
+
+```env
+DB_HOST=your_database_host
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_NAME=feed_management
+
+JWT_SECRET_KEY=your_secret_key
+```
+
+---
+
+## API Endpoints
+
+### Authentication
+
+```http
+POST /api/auth/signup
+POST /api/auth/login
+```
+
+### Feed Stock
+
+```http
+GET /api/feed-stock
+POST /api/feed-stock
+```
+
+### Feed Logs
+
+```http
+GET /api/feed-logs
+POST /api/feed-logs
+```
+
+### Tanks
+
+```http
+GET /api/tanks
+POST /api/tanks
+PUT /api/tanks/<id>
+DELETE /api/tanks/<id>
+```
+
+### Dashboard
+
+```http
+GET /api/dashboard
+GET /api/low-stock
+```
+
+### Reports
+
+```http
+GET /api/reports
+```
+
+---
+
+## Challenges Solved
+
+During development, the following production challenges were successfully resolved:
+
+* Railway MySQL Connectivity Issues
+* Database Migration Problems
+* JWT Authentication Errors
+* Git Tracking and Deployment Issues
+* Vercel Build Failures
+* CORS Configuration Problems
+* Timezone Conversion Issues
+* Inventory Timestamp Accuracy
+
+---
+
+## Future Enhancements
+
+* Email Notifications
+* Password Reset Functionality
+* Advanced Analytics Dashboard
+* Mobile Responsive Improvements
+* Multi-Role User Access
+* Export Reports to PDF
+* Automated Backup System
+
+---
+
+## Author
+
+**Madhan Thulasi Nagamanikkam**
+
+B.E. Electronics and Communication Engineering
+
+Government College of Engineering, Erode
+
+### Skills Demonstrated
+
+* Full Stack Development
+* React.js Development
+* Flask API Development
+* MySQL Database Design
+* JWT Authentication
+* Deployment & DevOps
+* Production Debugging
+* REST API Development
+* Git & GitHub Workflow
+* Railway & Vercel Deployment
