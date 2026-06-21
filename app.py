@@ -15,10 +15,15 @@ load_dotenv()
 app = Flask(__name__)
 
 # Enable CORS for all routes under /api/ coming from Vite frontend
-CORS(app, resources={r"/api/*": {"origins": [
-    "http://localhost:5173", "http://127.0.0.1:5173",
-    "http://localhost:5174", "http://127.0.0.1:5174",
-]}})
+CORS(
+    app,
+    resources={r"/api/*": {"origins": [
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:5174", "http://127.0.0.1:5174",
+        "https://aquafeed-front.vercel.app"
+    ]}},
+    supports_credentials=True
+)
 
 # 🔌 DB CONNECTION
 def get_db_connection():
