@@ -27,90 +27,110 @@ CORS(
 
 # 🔌 DB CONNECTION
 def get_db_connection():
+    host = os.getenv("DB_HOST") or os.getenv("MYSQLHOST") or "localhost"
+    user = os.getenv("DB_USER") or os.getenv("MYSQLUSER") or "root"
+    password = os.getenv("DB_PASSWORD") or os.getenv("MYSQLPASSWORD") or "Maddy@#13"
+    database = os.getenv("DB_NAME") or os.getenv("MYSQLDATABASE") or "feed_management"
+    port_str = os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or "3306"
+    try:
+        port = int(port_str)
+    except ValueError:
+        port = 3306
+
     return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", "Maddy@#13"),
-        database=os.getenv("DB_NAME", "feed_management")
+        host=host,
+        user=user,
+        password=password,
+        database=database,
+        port=port
     )
 
 def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Create users table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(100) NOT NULL UNIQUE,
-        email VARCHAR(100) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-    
-    # Alter users to add role column safely
     try:
-        cursor.execute("ALTER TABLE users ADD COLUMN role VARCHAR(50) NOT NULL DEFAULT 'viewer'")
-    except Error as err:
-        if err.errno == 1060 or "Duplicate column name" in str(err):
-            pass
-        else:
-            print(f"[WARN] Failed to alter users: {err}")
-
-    # Set existing admin email to role='admin'
-    try:
-        cursor.execute("UPDATE users SET role = 'admin' WHERE email = 'admin@aquafeed.com'")
-    except Error as err:
-        print(f"[WARN] Failed to update admin role: {err}")
-
-    # Set any NULL roles to 'viewer'
-    try:
-        cursor.execute("UPDATE users SET role = 'viewer' WHERE role IS NULL")
-    except Error as err:
-        print(f"[WARN] Failed to update null roles: {err}")
-    
-    # Alter feed_stock to add user_id column
-    try:
-        cursor.execute("ALTER TABLE feed_stock ADD COLUMN user_id INT NULL")
-        cursor.execute("ALTER TABLE feed_stock ADD FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL")
-    except Error as err:
-        # Check if already exists (MySQL code 1060)
-        if err.errno == 1060 or "Duplicate column name" in str(err):
-            pass
-        else:
-            print(f"[WARN] Failed to alter feed_stock: {err}")
-            
-    # Create audit_logs table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS audit_logs (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NULL,
-        username VARCHAR(100) NOT NULL DEFAULT 'system',
-        action VARCHAR(100) NOT NULL,
-        module VARCHAR(100) NOT NULL,
-        description TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_audit_created (created_at),
-        INDEX idx_audit_user (username)
-    )
-    """)
-
-    # Insert default admin user if none exists
-    cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchone()[0] == 0:
-        hashed_password = generate_password_hash("password123")
-        cursor.execute(
-            "INSERT INTO users (username, email, password_hash, role) VALUES (%s, %s, %s, %s)",
-            ("admin", "admin@aquafeed.com", hashed_password, "admin")
-        )
-        print("[INFO] Created default admin user.")
+        conn = get_db_connection()
+        cursor = conn.cursor()
         
-    conn.commit()
-    cursor.close()
-    conn.close()
+        # Create users table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            email VARCHAR(100) NOT NULL UNIQUE,
+            password_hash VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        
+        # Alter users to add role column safely
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN role VARCHAR(50) NOT NULL DEFAULT 'viewer'")
+        except Error as err:
+            if err.errno == 1060 or "Duplicate column name" in str(err):
+                pass
+            else:
+                print(f"[WARN] Failed to alter users: {err}")
 
-init_db()
+        # Set existing admin email to role='admin'
+        try:
+            cursor.execute("UPDATE users SET role = 'admin' WHERE email = 'admin@aquafeed.com'")
+        except Error as err:
+            print(f"[WARN] Failed to update admin role: {err}")
+
+        # Set any NULL roles to 'viewer'
+        try:
+            cursor.execute("UPDATE users SET role = 'viewer' WHERE role IS NULL")
+        except Error as err:
+            print(f"[WARN] Failed to update null roles: {err}")
+        
+        # Alter feed_stock to add user_id column
+        try:
+            cursor.execute("ALTER TABLE feed_stock ADD COLUMN user_id INT NULL")
+            cursor.execute("ALTER TABLE feed_stock ADD FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL")
+        except Error as err:
+            # Check if already exists (MySQL code 1060)
+            if err.errno == 1060 or "Duplicate column name" in str(err):
+                pass
+            else:
+                print(f"[WARN] Failed to alter feed_stock: {err}")
+                
+        # Create audit_logs table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NULL,
+            username VARCHAR(100) NOT NULL DEFAULT 'system',
+            action VARCHAR(100) NOT NULL,
+            module VARCHAR(100) NOT NULL,
+            description TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_audit_created (created_at),
+            INDEX idx_audit_user (username)
+        )
+        """)
+
+        # Insert default admin user if none exists
+        cursor.execute("SELECT COUNT(*) FROM users")
+        if cursor.fetchone()[0] == 0:
+            hashed_password = generate_password_hash("password123")
+            cursor.execute(
+                "INSERT INTO users (username, email, password_hash, role) VALUES (%s, %s, %s, %s)",
+                ("admin", "admin@aquafeed.com", hashed_password, "admin")
+            )
+            print("[INFO] Created default admin user.")
+            
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("[INFO] Database initialized successfully.")
+    except Error as err:
+        print(f"[WARN] Database initialization failed (MySQL Error): {err}")
+    except Exception as err:
+        print(f"[WARN] Database initialization failed: {err}")
+
+try:
+    init_db()
+except Exception as err:
+    print(f"[ERROR] Exception during init_db startup: {err}")
 
 # ✅ STANDARD RESPONSE
 def success_response(message, data=None):
@@ -1304,7 +1324,8 @@ def generate_pdf():
 # =========================
 if __name__ == '__main__':
     try:
-        print("[INFO] Starting Flask backend on port 5000...")
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        port = int(os.environ.get('PORT', 5000))
+        print(f"[INFO] Starting Flask backend on port {port}...")
+        app.run(host='0.0.0.0', port=port, debug=False)
     except Exception as e:
         print(f"[ERROR] Failed to start server: {str(e)}")
