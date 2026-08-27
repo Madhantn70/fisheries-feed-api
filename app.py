@@ -29,21 +29,28 @@ CORS(
 def get_db_connection():
     host = os.getenv("DB_HOST") or os.getenv("MYSQLHOST") or "localhost"
     user = os.getenv("DB_USER") or os.getenv("MYSQLUSER") or "root"
-    password = os.getenv("DB_PASSWORD") or os.getenv("MYSQLPASSWORD") or "Maddy@#13"
+    password = os.getenv("DB_PASSWORD") or os.getenv("MYSQLPASSWORD")
     database = os.getenv("DB_NAME") or os.getenv("MYSQLDATABASE") or "feed_management"
     port_str = os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or "3306"
+
     try:
         port = int(port_str)
     except ValueError:
         port = 3306
 
-    return mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password,
-        database=database,
-        port=port
-    )
+    connection_config = {
+        "host": host,
+        "user": user,
+        "password": password,
+        "database": database,
+        "port": port,
+    }
+
+    # Aiven MySQL requires an encrypted SSL connection.
+    if "aivencloud.com" in host:
+        connection_config["ssl_disabled"] = False
+
+    return mysql.connector.connect(**connection_config)
 
 def init_db():
     try:
