@@ -53,86 +53,210 @@ def get_db_connection():
     return mysql.connector.connect(**connection_config)
 
 def init_db():
+    """
+    Initialize all database tables required by the application.
+
+    Safe to run on every deployment because CREATE statements use
+    IF NOT EXISTS. Also performs small migrations for older databases.
+    """
+    conn = None
+    cursor = None
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        # Create users table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(100) NOT NULL UNIQUE,
-            email VARCHAR(100) NOT NULL UNIQUE,
-            password_hash VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
-        
-        # Alter users to add role column safely
-        try:
-            cursor.execute("ALTER TABLE users ADD COLUMN role VARCHAR(50) NOT NULL DEFAULT 'viewer'")
-        except Error as err:
-            if err.errno == 1060 or "Duplicate column name" in str(err):
-                pass
-            else:
-                print(f"[WARN] Failed to alter users: {err}")
 
-        # Set existing admin email to role='admin'
+        # ============================================================
+        # 1. USERS
+        # ============================================================
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) NOT NULL UNIQUE,
+                email VARCHAR(100) NOT NULL UNIQUE,
+                password_hash VARCHAR(255) NOT NULL,
+                role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # ============================================================
+        # 2. FEED TYPES
+        # ============================================================
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS feed_types (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # ============================================================
+        # 3. TANKS
+        # ============================================================
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tanks (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                tank_name VARCHAR(100) NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # ============================================================
+        # 4. FEED STOCK
+        # ============================================================
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS feed_stock (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                feed_type_id INT NOT NULL,
+                quantity DECIMAL(12,2) NOT NULL,
+                date_added DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                user_id INT NULL,
+                INDEX idx_feed_stock_type (feed_type_id),
+                INDEX idx_feed_stock_user (user_id),
+                CONSTRAINT fk_feed_stock_type
+                    FOREIGN KEY (feed_type_id)
+                    REFERENCES feed_types(id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_feed_stock_user
+                    FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE SET NULL
+            )
+        """)
+
+        # ============================================================
+        # 5. FEED LOGS
+        # ============================================================
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS feed_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                feed_type_id INT NOT NULL,
+                tank_id INT NOT NULL,
+                quantity_used DECIMAL(12,2) NOT NULL,
+                feed_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_feed_logs_type (feed_type_id),
+                INDEX idx_feed_logs_tank (tank_id),
+                INDEX idx_feed_logs_time (feed_time),
+                CONSTRAINT fk_feed_logs_type
+                    FOREIGN KEY (feed_type_id)
+                    REFERENCES feed_types(id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_feed_logs_tank
+                    FOREIGN KEY (tank_id)
+                    REFERENCES tanks(id)
+                    ON DELETE CASCADE
+            )
+        """)
+
+        # ============================================================
+        # 6. AUDIT LOGS
+        # ============================================================
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NULL,
+                username VARCHAR(100) NOT NULL DEFAULT 'system',
+                action VARCHAR(100) NOT NULL,
+                module VARCHAR(100) NOT NULL,
+                description TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_audit_created (created_at),
+                INDEX idx_audit_user (username)
+            )
+        """)
+
+        # ============================================================
+        # MIGRATION SUPPORT FOR OLDER DATABASES
+        # ============================================================
         try:
-            cursor.execute("UPDATE users SET role = 'admin' WHERE email = 'admin@aquafeed.com'")
+            cursor.execute(
+                "ALTER TABLE users ADD COLUMN role VARCHAR(50) NOT NULL DEFAULT 'viewer'"
+            )
+        except Error as err:
+            if err.errno != 1060 and "Duplicate column name" not in str(err):
+                print(f"[WARN] Failed to add users.role: {err}")
+
+        try:
+            cursor.execute(
+                "ALTER TABLE feed_stock ADD COLUMN user_id INT NULL"
+            )
+        except Error as err:
+            if err.errno != 1060 and "Duplicate column name" not in str(err):
+                print(f"[WARN] Failed to add feed_stock.user_id: {err}")
+
+        try:
+            cursor.execute("""
+                ALTER TABLE feed_stock
+                ADD CONSTRAINT fk_feed_stock_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE SET NULL
+            """)
+        except Error as err:
+            if "Duplicate foreign key constraint name" not in str(err) and err.errno not in (1826, 1061):
+                print(f"[WARN] feed_stock user_id foreign key not added: {err}")
+
+        try:
+            cursor.execute(
+                "UPDATE users SET role = 'admin' WHERE email = 'admin@aquafeed.com'"
+            )
         except Error as err:
             print(f"[WARN] Failed to update admin role: {err}")
 
-        # Set any NULL roles to 'viewer'
         try:
-            cursor.execute("UPDATE users SET role = 'viewer' WHERE role IS NULL")
+            cursor.execute(
+                "UPDATE users SET role = 'viewer' WHERE role IS NULL"
+            )
         except Error as err:
             print(f"[WARN] Failed to update null roles: {err}")
-        
-        # Alter feed_stock to add user_id column
-        try:
-            cursor.execute("ALTER TABLE feed_stock ADD COLUMN user_id INT NULL")
-            cursor.execute("ALTER TABLE feed_stock ADD FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL")
-        except Error as err:
-            # Check if already exists (MySQL code 1060)
-            if err.errno == 1060 or "Duplicate column name" in str(err):
-                pass
-            else:
-                print(f"[WARN] Failed to alter feed_stock: {err}")
-                
-        # Create audit_logs table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS audit_logs (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NULL,
-            username VARCHAR(100) NOT NULL DEFAULT 'system',
-            action VARCHAR(100) NOT NULL,
-            module VARCHAR(100) NOT NULL,
-            description TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_audit_created (created_at),
-            INDEX idx_audit_user (username)
-        )
-        """)
 
-        # Insert default admin user if none exists
+        # ============================================================
+        # DEFAULT ADMIN USER
+        # ============================================================
         cursor.execute("SELECT COUNT(*) FROM users")
+
         if cursor.fetchone()[0] == 0:
             hashed_password = generate_password_hash("password123")
             cursor.execute(
-                "INSERT INTO users (username, email, password_hash, role) VALUES (%s, %s, %s, %s)",
+                """
+                INSERT INTO users (username, email, password_hash, role)
+                VALUES (%s, %s, %s, %s)
+                """,
                 ("admin", "admin@aquafeed.com", hashed_password, "admin")
             )
             print("[INFO] Created default admin user.")
-            
+
         conn.commit()
-        cursor.close()
-        conn.close()
         print("[INFO] Database initialized successfully.")
+        print("[INFO] Required tables: users, feed_types, tanks, feed_stock, feed_logs, audit_logs")
+
     except Error as err:
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         print(f"[WARN] Database initialization failed (MySQL Error): {err}")
+
     except Exception as err:
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         print(f"[WARN] Database initialization failed: {err}")
+
+    finally:
+        if cursor:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 try:
     init_db()
