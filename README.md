@@ -38,3 +38,40 @@ Flask Backend
       │ MySQL
       ▼
 Aiven Database
+## Technology Stack
+
+### Frontend
+- React
+- Vite
+- Tailwind CSS
+- Axios
+- React Router
+
+### Backend
+- Python
+- Flask
+- Flask-CORS
+- JWT Authentication
+- Gunicorn
+
+### Database
+- MySQL
+- Aiven
+
+### Deployment
+- Vercel — Frontend
+- Render — Backend
+- Aiven — Database
+
+## System Architecture
+
+```text
+React Frontend
+      │
+      │ REST API
+      ▼
+Flask Backend
+      │
+      │ MySQL
+      ▼
+Aiven Database
